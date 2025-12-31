@@ -4,6 +4,37 @@ checkpoints/
 data/
 wandb/
 
+# Training / experiment outputs.
+logs/
+log/
+outputs/
+output/
+runs/
+tb_logs/
+lightning_logs/
+mlruns/
+**/events.out.tfevents.*
+
+# Model / weight artifacts (in case they appear outside checkpoints/).
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+
+# Editors / IDEs.
+.vscode/
+.idea/
+*.code-workspace
+
+# OS / temp files.
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+nohup.out
+.direnv/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

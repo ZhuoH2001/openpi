@@ -13,8 +13,7 @@ git submodule update --init --recursive
 ## With Docker (recommended)
 
 ```bash
-# Grant access to the X11 server:
-sudo xhost +local:docker
+# Grant access to the X11 ser
 
 # To run with the default checkpoint and task suite:
 SERVER_ARGS="--env LIBERO" docker compose -f examples/libero/compose.yml up --build
