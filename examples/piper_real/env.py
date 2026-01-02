@@ -1,6 +1,8 @@
 from typing import List, Optional  # noqa: UP035
 
 import einops
+import os
+import numpy as np
 from openpi_client import image_tools
 from openpi_client.runtime import environment as _environment
 from typing_extensions import override
@@ -18,7 +20,7 @@ class PiperRealEnvironment(_environment.Environment):
         render_height: int = 224,
         render_width: int = 224,
     ) -> None:
-        self._env = _real_env.make_real_env(init_node=True, reset_position=reset_position)
+        self._env = _real_env.make_real_env()
         self._render_height = render_height
         self._render_width = render_width
 
@@ -38,21 +40,31 @@ class PiperRealEnvironment(_environment.Environment):
             raise RuntimeError("Timestep is not set. Call reset() first.")
 
         obs = self._ts.observation
-        for k in list(obs["images"].keys()):
-            if "_depth" in k:
-                del obs["images"][k]
+        # for k in list(obs["images"].keys()):
+        #     if "_depth" in k:
+        #         del obs["images"][k]
 
-        for cam_name in obs["images"]:
-            img = image_tools.convert_to_uint8(
-                image_tools.resize_with_pad(obs["images"][cam_name], self._render_height, self._render_width)
+
+        img = image_tools.convert_to_uint8(
+                image_tools.resize_with_pad(obs["images"], self._render_height, self._render_width)
             )
-            obs["images"][cam_name] = einops.rearrange(img, "h w c -> c h w")
+        obs["images"] = einops.rearrange(img, "h w c -> c h w")
 
-        return {
-            "state": obs["qpos"],
-            "images": obs["images"],
+        state = np.asarray(obs["state"])
+
+        # Standardized keys consumed by input transforms like PiperInputs.
+        observation = {
+            "observation/state": state,
+            "observation/image": obs["images"],
         }
+
+        # If prompt is not provided, the policy server can inject one via --default-prompt.
+        if (prompt := os.environ.get("PIPER_PROMPT")):
+            observation["prompt"] = prompt
+
+        return observation
 
     @override
     def apply_action(self, action: dict) -> None:
+        # print(f"action['actions']: {action['actions']}")
         self._ts = self._env.step(action["actions"])

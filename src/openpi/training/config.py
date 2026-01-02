@@ -838,7 +838,10 @@ _CONFIGS = [
                 # a field called ``prompt`` in the input dict. The recommended setting is True.
                 prompt_from_task=True,
             ),
-            extra_delta_transform=True,
+            # NOTE: Only enable if your dataset stores *absolute* joint targets in the same unit as state.
+            # The Benxiaogu/banana1231 dataset stores state in milli-degree-scaled units, while actions are
+            # in radians; enabling DeltaActions/AbsoluteActions would mix units and can blow up actions.
+            extra_delta_transform=False,
         ),
         # Here you define which pre-trained checkpoint you want to load to initialize the model.
         # This should match the model config you chose above -- i.e. in this case we use the pi0 base model.
@@ -855,7 +858,8 @@ _CONFIGS = [
         data=LeRobotPiperDataConfig(
             repo_id="Benxiaogu/banana1231",
             base_config=DataConfig(prompt_from_task=True),
-            extra_delta_transform=True,
+            # See note in `pi0_piper` above.
+            extra_delta_transform=False,
         ),
         weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi0_base/params"),
         num_train_steps=30_000,

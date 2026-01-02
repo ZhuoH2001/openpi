@@ -1,13 +1,26 @@
 import dataclasses
 import logging
 
+import pathlib
+import sys
+
 from openpi_client import action_chunk_broker
 from openpi_client import websocket_client_policy as _websocket_client_policy
 from openpi_client.runtime import runtime as _runtime
 from openpi_client.runtime.agents import policy_agent as _policy_agent
 import tyro
 
-from examples.piper_real import env as _env
+try:
+    from examples.piper_real import env as _env
+except ModuleNotFoundError:
+    # When executed as a script (e.g. `python examples/piper_real/main.py`), the
+    # repo root may not be on sys.path, so `examples.*` imports can fail.
+    repo_root = pathlib.Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(repo_root))
+    # If some dependency already imported a different `examples` module from the
+    # environment, it will be cached in sys.modules and shadow our local package.
+    sys.modules.pop("examples", None)
+    from examples.piper_real import env as _env
 
 
 @dataclasses.dataclass
@@ -15,10 +28,10 @@ class Args:
     host: str = "0.0.0.0"
     port: int = 8000
 
-    action_horizon: int = 25
+    action_horizon: int = 50
 
     num_episodes: int = 1
-    max_episode_steps: int = 1000
+    max_episode_steps: int = 3000
 
 
 def main(args: Args) -> None:

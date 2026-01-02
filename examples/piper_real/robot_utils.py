@@ -4,13 +4,11 @@ from functools import cached_property
 from typing import Any
 from dataclasses import dataclass
 from piper_sdk import *
-from errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
-from camera_realsense import CameraRealSense
 logger = logging.getLogger(__name__)
 
-@dataclass
+
 class PiPERMotorsBusConfig:
-    can_name: str = "piper_follower"
+    can_name: str = "can_follower"
     motors: dict[str, tuple[int, str]] = {
                                             "joint_1": (1, "agilex_piper"),
                                             "joint_2": (2, "agilex_piper"),

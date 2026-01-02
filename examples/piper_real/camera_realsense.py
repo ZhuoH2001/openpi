@@ -31,9 +31,9 @@ import numpy as np
 
 import pyrealsense2 as rs
 
-from errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
+from .errors import DeviceAlreadyConnectedError, DeviceNotConnectedError
 
-from configuration_realsense import ColorMode, Cv2Rotation, RealSenseCameraConfig
+from .configuration_realsense import ColorMode, Cv2Rotation, RealSenseCameraConfig
 
 logger = logging.getLogger(__name__)
 
@@ -110,10 +110,10 @@ class RealSenseCamera:
         Args:
             config: The configuration settings for the camera.
         """
-
-        super().__init__(config)
-
         self.config = config
+        self.fps: int | None = config.fps
+        self.width: int | None = config.width
+        self.height: int | None = config.height
 
         if config.serial_number_or_name.isdigit():
             self.serial_number = config.serial_number_or_name
