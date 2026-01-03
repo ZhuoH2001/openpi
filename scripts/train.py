@@ -28,6 +28,61 @@ import openpi.training.utils as training_utils
 import openpi.training.weight_loaders as _weight_loaders
 
 
+def _format_param_count(n: int) -> str:
+    if n >= 1_000_000_000:
+        return f"{n / 1_000_000_000:.2f}B"
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.2f}M"
+    if n >= 1_000:
+        return f"{n / 1_000:.2f}K"
+    return str(n)
+
+
+def _count_params_from_state(state: nnx.State) -> int:
+    """Count number of scalar parameters in an NNX state.
+
+    Expects `state` to contain arrays as leaves (e.g. model parameters). Any non-array
+    leaves are ignored.
+    """
+    pure = state.to_pure_dict()
+    flat = traverse_util.flatten_dict(pure)
+    total = 0
+    for v in flat.values():
+        if isinstance(v, jax.ShapeDtypeStruct):
+            continue
+        if hasattr(v, "shape"):
+            total += int(np.prod(v.shape))
+    return total
+
+
+def _log_param_counts(config: _config.TrainConfig, train_state: training_utils.TrainState) -> None:
+    all_params = train_state.params.filter(nnx.Param)
+    trainable_params = train_state.params.filter(config.trainable_filter)
+
+    total = _count_params_from_state(all_params)
+    trainable = _count_params_from_state(trainable_params)
+
+    logging.info(
+        "Model parameter counts: total=%s (%d), trainable=%s (%d)",
+        _format_param_count(total),
+        total,
+        _format_param_count(trainable),
+        trainable,
+    )
+    try:
+        wandb.log(
+            {
+                "params/total": total,
+                "params/trainable": trainable,
+                "params/trainable_frac": (trainable / total) if total else 0.0,
+            },
+            step=0,
+        )
+    except Exception:
+        # Logging param counts should never break training.
+        logging.exception("Failed to log parameter counts to wandb")
+
+
 def init_logging():
     """Custom logging format for better readability."""
     level_mapping = {"DEBUG": "D", "INFO": "I", "WARNING": "W", "ERROR": "E", "CRITICAL": "C"}
@@ -239,6 +294,9 @@ def main(config: _config.TrainConfig):
 
     if resuming:
         train_state = _checkpoints.restore_state(checkpoint_manager, train_state, data_loader)
+        jax.block_until_ready(train_state)
+
+    _log_param_counts(config, train_state)
 
     ptrain_step = jax.jit(
         functools.partial(train_step, config),

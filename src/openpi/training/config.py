@@ -831,7 +831,7 @@ _CONFIGS = [
         # dataset. For your own dataset, you can change the repo_id to point to your dataset.
         # Also modify the DataConfig to use the new config you made for your dataset above.
         data=LeRobotPiperDataConfig(
-            repo_id="Benxiaogu/banana1231",
+            repo_id="Benxiaogu/piper_cube",
             base_config=DataConfig(
                 # This flag determines whether we load the prompt (i.e. the task instruction) from the
                 # ``task`` field in the LeRobot dataset. If set to True, the prompt will show up in
@@ -856,7 +856,7 @@ _CONFIGS = [
         # Here is an example of loading a pi0 model for LoRA fine-tuning.
         model=pi0_config.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora"),
         data=LeRobotPiperDataConfig(
-            repo_id="Benxiaogu/banana1231",
+            repo_id="Benxiaogu/piper_cube",
             base_config=DataConfig(prompt_from_task=True),
             # See note in `pi0_piper` above.
             extra_delta_transform=False,
@@ -872,6 +872,30 @@ _CONFIGS = [
         ).get_freeze_filter(),
         # Turn off EMA for LoRA finetuning.
         ema_decay=None,
+    ),
+    TrainConfig(
+        name="pi05_piper_low_mem_finetune",
+        # Here is an example of loading a pi0 model for LoRA fine-tuning.
+        model=pi0_config.Pi0Config(paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora", pi05=True),
+        data=LeRobotPiperDataConfig(
+            repo_id="Benxiaogu/banana1231",
+            base_config=DataConfig(prompt_from_task=True),
+            # See note in `pi0_piper` above.
+            extra_delta_transform=False,
+        ),
+        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
+        num_train_steps=30_000,
+        save_interval=10_000,
+        # The freeze filter defines which parameters should be frozen during training.
+        # We have a convenience function in the model config that returns the default freeze filter
+        # for the given model config for LoRA finetuning. Just make sure it matches the model config
+        # you chose above.
+        freeze_filter=pi0_config.Pi0Config(
+            paligemma_variant="gemma_2b_lora", action_expert_variant="gemma_300m_lora", pi05=True
+        ).get_freeze_filter(),
+        # Turn off EMA for LoRA finetuning.
+        ema_decay=None,
+        batch_size=16
     ),
     #
     # Fine-tuning Aloha configs.

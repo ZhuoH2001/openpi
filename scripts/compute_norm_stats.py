@@ -15,15 +15,15 @@ import openpi.training.config as _config
 import openpi.training.data_loader as _data_loader
 import openpi.transforms as transforms
 
-# import os
+import os
 
-# os.environ['HTTP_PROXY'] = 'http://127.0.0.1:7890'
-# os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:7890'
+os.environ['HTTP_PROXY'] = 'http://127.0.0.1:7890'
+os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:7890'
 
 # from huggingface_hub import HfApi
 
 # hub_api = HfApi()
-# hub_api.create_tag("Benxiaogu/banana1231", tag="v2.1", repo_type="dataset")
+# hub_api.create_tag("Benxiaogu/piper_cube", tag="v2.1", repo_type="dataset")
 
 class RemoveStrings(transforms.DataTransformFn):
     def __call__(self, x: dict) -> dict:
